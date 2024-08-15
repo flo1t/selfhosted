@@ -1,0 +1,106 @@
+{
+    "datasource": {
+      "type": "influxdb",
+      "uid": "b1962428-9fd6-4517-8c24-45be5e165d2e"
+    },
+    "fieldConfig": {
+      "defaults": {
+        "custom": {
+          "lineWidth": 0,
+          "fillOpacity": 70,
+          "spanNulls": false,
+          "insertNulls": 300000,
+          "hideFrom": {
+            "tooltip": false,
+            "viz": false,
+            "legend": false
+          }
+        },
+        "color": {
+          "mode": "thresholds"
+        },
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "#A352CC",
+              "value": null
+            }
+          ]
+        },
+        "displayName": "${__field.labels.UserName}",
+        "fieldMinMax": false
+      },
+      "overrides": []
+    },
+    "gridPos": {
+      "h": 6,
+      "w": 6,
+      "x": 18,
+      "y": 15
+    },
+    "id": 65124,
+    "options": {
+      "mergeValues": true,
+      "showValue": "auto",
+      "alignValue": "left",
+      "rowHeight": 0.9,
+      "legend": {
+        "showLegend": false,
+        "displayMode": "list",
+        "placement": "bottom"
+      },
+      "tooltip": {
+        "mode": "single",
+        "sort": "none",
+        "maxHeight": 600
+      }
+    },
+    "pluginVersion": "10.3.3",
+    "targets": [
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "b1962428-9fd6-4517-8c24-45be5e165d2e"
+        },
+        "groupBy": [
+          {
+            "params": [
+              "$__interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "null"
+            ],
+            "type": "fill"
+          }
+        ],
+        "orderByTime": "ASC",
+        "policy": "default",
+        "query": "from(bucket: \"telegraf\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"jellyfin\")\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r[\"IsPaused\"] == false)\n  |> group(columns: [\"UserName\"])\n  |> map(fn: (r) => ({\n      r with\n      display_value: if exists r.IndexNumber and exists r.ParentIndexNumber and exists r.Name and exists r.SeriesName then\n                      r.SeriesName + \" - S\" + string(v: r.ParentIndexNumber) + \"E\" + string(v: r.IndexNumber) + \" - \" + r.Name\n                      else \"\"\n  }))\n  |> fill(value: \"\")\n  |> filter(fn: (r) => exists r[\"display_value\"] and r[\"display_value\"] != \"\")\n  |> keep(columns: [\"display_value\", \"UserName\", \"_time\"])\n",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [
+            {
+              "params": [
+                "value"
+              ],
+              "type": "field"
+            },
+            {
+              "params": [],
+              "type": "mean"
+            }
+          ]
+        ],
+        "tags": []
+      }
+    ],
+    "title": "Jellyfin streams",
+    "type": "state-timeline"
+  }

@@ -1,0 +1,37 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    hostname: jellyfin
+    restart: always
+    group_add:
+      - 109
+    volumes:
+      - ./config:/config
+      - ./web-config/web-config.json:/jellyfin/jellyfin-web/config.json
+      - /mnt/media/shows:/data/shows:ro
+      - /mnt/media/movies:/data/movies:ro
+    environment:
+      TZ: $TZ
+      JELLYFIN_PublishedServerUrl: https://$FQDN
+      JELLYFIN_DATA_DIR: /config/data
+      JELLYFIN_CONFIG_DIR: /config
+      JELLYFIN_LOG_DIR: /config/log
+      JELLYFIN_CACHE_DIR: /config/cache
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    labels:
+      traefik.enable: true
+      traefik.http.routers.jellyfin-rtr.entrypoints: https
+      traefik.http.routers.jellyfin-rtr.rule: Host(`$FQDN`)
+      traefik.http.routers.jellyfin-rtr.tls: true
+      traefik.http.routers.jellyfin-rtr.tls.certResolver: dns-cloudflare
+      traefik.http.routers.jellyfin-rtr.middlewares: chain-no-auth-jellyfin@file
+      traefik.http.routers.jellyfin-rtr.service: jellyfin-svc
+      traefik.http.services.jellyfin-svc.loadbalancer.server.port: 8096
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
