@@ -44,7 +44,7 @@ Execute this command to retrieve the "group_add" value, which has to be replaced
 Start the Docker container:
 `docker compose -f ~docker/jellyfin/jellyfin-compose.yml up -d`
 
-Don't forget to set the needed DNS entries for reaching the service.
+Don't forget to set needed DNS entries for reaching the service.
 
 #### Hardware transcoding
 Check the supported profiles with this command:
