@@ -11,14 +11,17 @@ https://jellyfin.org/
 |---|---|
 | ~/docker/jellyfin | folder for jellyfin |
 | ~/docker/jellyfin/.env | env file for secrets |
-| ~/docker/jellyfin/setup files | folder for custom files, which are not used from docker |
 | ~/docker/jellyfin/jellyfin-compose.yml | docker compose file |
+| ~/docker/jellyfin/setup files | folder for custom files, which are not used from docker |
 | ~/docker/jellyfin/config | data folder |
-| ~/docker/jellyfin/web-config | fodler for web config |
+| ~/docker/jellyfin/web-config | folder for web config |
 
 ### Setup
 #### Overview
 I'm mounting a NFS share from my NAS to /mnt/media. This folder will be used as Jellyfin media location.
+
+#### Prerequisites
+- Running Traefik installation
 
 #### Mount NFS share
 ```sh
@@ -36,6 +39,17 @@ Prepare the folder structure:
 ```sh
 mkdir -p ~/docker/jellyfin/{config,web-config}
 touch ~/docker/jellyfin/web-config/config.json
+touch ~/docker/jellyfin/.env
+sudo chmod 600 ~/docker/jellyfin/.env
+```
+
+Update the variables in the .env file according to your setup:
+```sh
+nano ~/docker/jellyfin/.env
+
+# add:
+FQDN=<Jellyfin URL>
+TZ=Europe/Zurich
 ```
 
 Execute this command to retrieve the "group_add" value, which has to be replaced in the jellyfin-compose.yml file (needed for hardware transcoding).
@@ -83,7 +97,7 @@ If you are using Cloudflare, follow the following steps:
     },
     ```
 
-#### Monitoring
+### Monitoring
 I'm monitoring Jellyfin with Grafana, Telegraf and InfluxDB (flux). RPI01 is my monitoring server.
 - Create a Jellyfin API Token via webinterface
 - Add a custom telegraf config:
@@ -95,13 +109,9 @@ I'm monitoring Jellyfin with Grafana, Telegraf and InfluxDB (flux). RPI01 is my 
     - State timeline with streamed files per user: setup-files\grafana-visualization-streams-per-user.json
     - Network throughput: setup-files\grafana-visualization-streams-per-user.json
 
-#### Kill simultaneous streams
-I made a script (setup-files\kill-jeyllfin-sessions.py), to stop simultaneous streams and notify the user about it. The script is run via scheduled Gitea Action.
+### Stop simultaneous streams
+I made a script (setup-files\stop-jeyllfin-sessions.py), to stop simultaneous streams and notify the user about it. The script is run via scheduled Gitea Action.
 
 ### ToDo
-- Describe which variables to replace in .env file
 - Implement Authentik for Jellyserr
-- Insert Traefik README.md
-- Insert Crowdsec README.md
-- Insert Grafana README.md
-- Move Grafana dashboards to Grafana folder
+- Move Grafana dashboards to Grafana folder as soon as Grafana is published
