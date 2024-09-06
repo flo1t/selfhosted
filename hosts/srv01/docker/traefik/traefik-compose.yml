@@ -1,0 +1,103 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    hostname: traefik
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+      - 10011:10011 # teamspeak10011
+      - 30033:30033 # teamspeak30033
+      - 9987:9987/udp # teamspeak9987
+      - $WG_PORT:$WG_PORT/udp # wireguard<PORT>
+      - 2222:2222 # gitea2222
+      - 25565:25565 # minecraft25565
+      - 25575:25575 # minecraft25575
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/rules:/rules
+      - ./data/acme.json:/acme.json
+      - ./logs:/logs
+    environment:
+      TZ: $TZ
+      CF_API_EMAIL: $CLOUDFLARE_EMAIL
+      CF_API_KEY: $CLOUDFLARE_API_KEY
+      DOMAINNAME_CLOUD_SERVER: $DOMAINNAME_CLOUD_SERVER
+      DOMAINNAME_LOCAL_SERVER: $DOMAINNAME_LOCAL_SERVER
+      WG_PORT: $WG_PORT
+    command:
+      - --global.checkNewVersion=true
+      - --global.sendAnonymousUsage=false
+# not needed at the moment
+#      - --metrics.influxdb2=true
+#      - --metrics.influxdb2.address=$INFLUX_URL
+#      - --metrics.influxdb2.token=$INFLUX_TOKEN
+#      - --metrics.influxdb2.org=$INFLUX_ORG
+#      - --metrics.influxdb2.bucket=$INFLUX_BUCKET
+#      - --metrics.influxdb2.pushInterval=30s
+#      - --metrics.influxdb2.addrouterslabels=true
+      - --entryPoints.http.address=:80
+      - --entryPoints.https.address=:443
+      - --entrypoints.https.forwardedHeaders.trustedIPs=$CLOUDFLARE_IPS,$LOCAL_IPS
+      - --entryPoints.traefik.address=:8080
+      - --entryPoints.wireguard$WG_PORT.address=:$WG_PORT/udp
+      - --entryPoints.gitea2222.address=:2222/tcp
+      - --entryPoints.teamspeak10011.address=:10011/tcp
+      - --entryPoints.teamspeak30033.address=:30033/tcp
+      - --entryPoints.teamspeak9987.address=:9987/udp
+      - --entryPoints.minecraft25565.address=:25565/tcp
+      - --entryPoints.minecraft25575.address=:25575/tcp
+      - --api=true
+      - --api.dashboard=true
+      - --ping=true
+      - --log=true
+      - --log.filePath=/logs/traefik.log
+      - --log.level=INFO
+      - --accessLog=true
+      - --accessLog.filePath=/logs/access.log
+      - --accessLog.bufferingSize=100
+      - --accessLog.filters.statusCodes=204-299,400-499,500-599
+      - --providers.docker=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.exposedByDefault=false
+      - --entrypoints.http.http.redirections.entrypoint.to=https
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
+      - --entrypoints.http.http.redirections.entrypoint.permanent=true
+      - --entrypoints.https.http.tls=true
+      - --entrypoints.https.http.tls.options=tls-opts@file
+      - --entrypoints.https.http.tls.certresolver=dns-cloudflare
+      - --entrypoints.https.http.tls.domains[0].main=$DOMAINNAME_CLOUD_SERVER
+      - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAINNAME_CLOUD_SERVER
+      - --entrypoints.https.http.tls.domains[1].main=$DOMAINNAME_LOCAL_SERVER
+      - --providers.docker.network=proxy
+      - --providers.file.directory=/rules
+      - --providers.file.watch=true
+      #- --certificatesResolvers.dns-cloudflare.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
+      - --certificatesResolvers.dns-cloudflare.acme.email=$CLOUDFLARE_EMAIL
+      - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90
+    labels:
+      traefik.enable: true
+      traefik.http.routers.traefik-rtr.entrypoints: https
+      traefik.http.routers.traefik-rtr.rule: Host(`$TRAEFIK_HOST.$DOMAINNAME_LOCAL_SERVER`)
+      traefik.http.routers.traefik-rtr.service: api@internal
+      traefik.http.routers.traefik-rtr.middlewares: chain-authentik-auth@file
+    healthcheck:
+      test: traefik healthcheck --ping
+    networks:
+      proxy:
+      crowdsec:
+        ipv4_address: 172.29.0.10
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+    attachable: true
+  crowdsec:
+    external: true

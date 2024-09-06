@@ -1,0 +1,96 @@
+services:
+  authentik-db:
+    image: postgres:15-alpine
+    restart: always
+    container_name: authentik-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 1m
+      interval: 1m
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: $PG_PASS
+      POSTGRES_USER: ${PG_USER:-authentik}
+      POSTGRES_DB: ${PG_DB:-authentik}
+    env_file:
+      - .env
+
+  authentik-redis:
+    image: redis:alpine
+    restart: always
+    container_name: authentik-redis
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 1m
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      
+  authentik-server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:latest
+    restart: always
+    container_name: authentik-server
+    command: server
+    environment:
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-db
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    volumes:
+      - ./media:/media
+      - ./templates:/templates
+    env_file:
+      - .env
+    networks:
+      - proxy
+      - default
+    labels:
+      traefik.enable: true
+      traefik.http.routers.authentik-rtr.entrypoints: https
+      traefik.http.routers.authentik-rtr.rule: Host(`$HOST.$DOMAIN`) || HostRegexp(`{subdomain:[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?}.$DOMAIN`) && PathPrefix(`/outpost.goauthentik.io/`)
+      traefik.http.routers.authentik-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.authentik-rtr.service: authentik-svc
+      traefik.http.services.authentik-svc.loadbalancer.server.port: 9000
+    depends_on:
+      - authentik-db
+      - authentik-redis
+
+  authentik-worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:latest
+    restart: always
+    container_name: authentik-worker
+    command: worker
+    environment:
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-db
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    user: root
+    volumes:
+      - ./media:/media
+      - ./certs:/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./templates:/templates
+    env_file:
+      - .env
+    depends_on:
+      - authentik-db
+      - authentik-redis
+
+  certbot:
+    container_name: authentik-certbot
+    image: certbot/dns-cloudflare:latest
+    volumes:
+      - ./certs/:/etc/letsencrypt
+      - ./cloudflare.ini:/config/cloudflare.ini
+      - ./certbot:/var/log/letsencrypt
+    command: certonly --non-interactive --register-unsafely-without-email --dns-cloudflare --dns-cloudflare-credentials /config/cloudflare.ini --agree-tos -d $HOST.$DOMAIN --server https://acme-v02.api.letsencrypt.org/directory
+
+networks:
+  proxy:
+    external: true

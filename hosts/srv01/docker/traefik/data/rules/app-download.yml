@@ -1,0 +1,87 @@
+http:
+  routers:
+    radarr-rtr:
+      rule: "Host(`radarr.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-authentik-auth
+      service: radarr-svc
+
+    sonarr-rtr:
+      rule: "Host(`sonarr.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-authentik-auth
+      service: sonarr-svc
+
+    readarr-rtr:
+      rule: "Host(`readarr.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-authentik-auth
+      service: readarr-svc
+
+    bazarr-rtr:
+      rule: "Host(`bazarr.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-authentik-auth
+      service: bazarr-svc
+
+    prowlarr-rtr:
+      rule: "Host(`prowlarr.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-authentik-auth
+      service: prowlarr-svc
+
+    qbittorrent-rtr:
+      rule: "Host(`qbit.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-authentik-auth
+      service: qbittorrent-svc
+
+    sabnzbd-rtr:
+      rule: "Host(`sabnzbd.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-authentik-auth
+      service: sabnzbd-svc
+
+  services:
+    radarr-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.12:7878"
+    sonarr-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.12:8989"
+    readarr-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.12:8787"
+    bazarr-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.12:6767"
+    prowlarr-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.12:9696"
+    qbittorrent-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.12:8080"
+    sabnzbd-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.12:8085"

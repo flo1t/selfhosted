@@ -12,7 +12,7 @@ https://jellyfin.org/
 | ~/docker/jellyfin | folder for jellyfin |
 | ~/docker/jellyfin/.env | env file for secrets |
 | ~/docker/jellyfin/jellyfin-compose.yml | docker compose file |
-| ~/docker/jellyfin/setup files | folder for custom files, which are not used from docker |
+| ~/docker/jellyfin/setup-files | folder for custom files, which are not used from docker |
 | ~/docker/jellyfin/config | data folder |
 | ~/docker/jellyfin/web-config | folder for web config |
 

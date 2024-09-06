@@ -1,0 +1,83 @@
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    hostname: crowdsec
+    restart: always
+    ports:
+      - 8082:8080
+    security_opt:
+      - no-new-privileges=true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config:/etc/crowdsec
+      - ./data:/var/lib/crowdsec/data
+      - ./logs:/var/log
+      - /var/log:/var/log_host:ro
+      - ../traefik/logs:/var/log/traefik/logs:ro
+      - ../jellyfin/config/log:/var/log/jellyfin/config/log:ro
+      - ../jellyseerr/config/logs:/var/log/jellyseerr/config/logs:ro
+      - ../nextcloud/logs:/var/log/nextcloud/logs:ro
+      - ../vaultwarden/logs:/var/log/vaultwarden/logs:ro
+      - ../teamspeak/data/logs:/var/log/teamspeak/teamspeak/logs:ro
+    environment:
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/iptables crowdsecurity/nextcloud Dominic-Wagner/vaultwarden LePresidente/jellyfin LePresidente/jellyseerr crowdsecurity/teamspeak3"
+      CUSTOM_HOSTNAME: $HOSTNAME
+    depends_on:
+      - crowdsec-db
+    networks:
+      crowdsec:
+        ipv4_address: 172.29.0.2
+
+  crowdsec-db:
+    image: mariadb
+    container_name: crowdsec-db
+    hostname: crowdsec-db
+    restart: always
+    volumes:
+      - ./sql:/var/lib/mysql/
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_PASSWORD
+      MYSQL_DATABASE: $MYSQL_DB
+    networks:
+      crowdsec:
+        ipv4_address: 172.29.0.5
+
+  crowdsec-bouncer-traefik:
+    image: fbonalair/traefik-crowdsec-bouncer:latest
+    container_name: crowdsec-bouncer-traefik
+    hostname: crowdsec-bouncer-traefik
+    restart: always
+    environment:
+      CROWDSEC_BOUNCER_LOG_LEVEL: 2
+      GIN_MODE: release
+      CROWDSEC_BOUNCER_API_KEY: $TRAEFIK_BOUNCER_KEY
+      CROWDSEC_AGENT_HOST: crowdsec:8080
+    depends_on:
+      - crowdsec
+    networks:
+      crowdsec:
+        ipv4_address: 172.29.0.3
+
+  crowdsec-bouncer-cloudflare:
+    image: crowdsecurity/cloudflare-bouncer:latest
+    container_name: crowdsec-bouncer-cloudflare
+    hostname: crowdsec-bouncer-cloudflare
+    restart: always
+    volumes:
+      - ./cloudflare-bouncer/cfg.yaml:/etc/crowdsec/bouncers/crowdsec-cloudflare-bouncer.yaml
+    depends_on:
+      - crowdsec
+    networks:
+      crowdsec:
+        ipv4_address: 172.29.0.4
+
+networks:
+  crowdsec:
+    name: crowdsec
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.29.0.0/24
+        gateway: 172.29.0.1

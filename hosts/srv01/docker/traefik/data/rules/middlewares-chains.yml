@@ -1,0 +1,38 @@
+http:
+  middlewares:
+    chain-no-auth:
+      chain:
+        middlewares:
+          - middlewares-traefik-bouncer
+          - middlewares-rate-limit
+          - middlewares-https-redirectscheme
+          - middlewares-secure-headers
+          - middlewares-compress
+
+    chain-no-auth-jellyfin:
+      chain:
+        middlewares:
+          - middlewares-traefik-bouncer
+          - middlewares-rate-limit
+          - middlewares-https-redirectscheme
+          - middlewares-secure-headers-jellyfin
+          - middlewares-compress
+
+    chain-no-auth-website:
+      chain:
+        middlewares:
+          - middlewares-traefik-bouncer
+          - middlewares-rate-limit
+          - middlewares-https-redirectscheme
+          - middlewares-secure-headers-website
+          - middlewares-compress
+
+    chain-authentik-auth:
+      chain:
+        middlewares:
+          - middlewares-traefik-bouncer    
+          - middlewares-rate-limit
+          - middlewares-https-redirectscheme
+          - middlewares-secure-headers
+          - middlewares-authentik
+          - middlewares-compress

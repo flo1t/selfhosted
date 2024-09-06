@@ -1,0 +1,26 @@
+http:
+  routers:
+    wg-easy-rtr:
+      rule: "Host(`wg-easy.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-no-auth
+      service: wg-easy-svc
+
+  services:
+    wg-easy-svc:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.10:51821"
+udp:
+  routers:
+    wg-easy-udp-rtr:
+      entryPoints:
+        - wireguard{{env "WG_PORT"}}
+      service:  wg-easy-udp-svc
+  services:
+     wg-easy-udp-svc:
+      loadBalancer:
+        servers:
+          - address: "192.168.1.10:{{env "WG_PORT"}}"
