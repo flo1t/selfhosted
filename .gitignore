@@ -1,1 +1,3 @@
 .env
+hosts/srv01/docker/monitoring/telegraf.d/
+hosts/srv01/docker/jellyfin/web-config/
