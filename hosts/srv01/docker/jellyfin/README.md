@@ -110,7 +110,7 @@ I'm monitoring Jellyfin with Grafana, Telegraf and InfluxDB (flux). RPI01 is my 
     - Network throughput: setup-files\grafana-visualization-streams-per-user.json
 
 ### Stop simultaneous streams
-I made a script (setup-files\stop-jeyllfin-sessions.py), to stop simultaneous streams and notify the user about it. The script is run via scheduled Gitea Action.
+I made a script (setup-files\stop-jeyllfin-streams.py), to stop simultaneous streams and notify the user about it. The script is run via scheduled Gitea Action.
 
 ### ToDo
 - Implement Authentik for Jellyserr

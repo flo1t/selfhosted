@@ -1,0 +1,16 @@
+services:
+  ytdl-sub:
+    image: ghcr.io/jmbannon/ytdl-sub-gui:latest
+    container_name: ytdl-sub
+    restart: always
+    ports:
+      - 8443:8443
+    volumes:
+      - ./config:/config
+      - /mnt/media/downloads/ytl-sub:/downloads
+    environment:
+      PUID: $PUID
+      PGID: $PGID
+      TZ: $TZ
+    labels:
+      deunhealth.restart.on.unhealthy: true

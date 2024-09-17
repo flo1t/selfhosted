@@ -69,9 +69,10 @@ services:
       - --entrypoints.https.http.tls=true
       - --entrypoints.https.http.tls.options=tls-opts@file
       - --entrypoints.https.http.tls.certresolver=dns-cloudflare
-      - --entrypoints.https.http.tls.domains[0].main=$DOMAINNAME_CLOUD_SERVER
-      - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAINNAME_CLOUD_SERVER
-      - --entrypoints.https.http.tls.domains[1].main=$DOMAINNAME_LOCAL_SERVER
+      - --entrypoints.https.http.tls.domains[0].main=$DOMAINNAME_LOCAL_SERVER
+      - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAINNAME_LOCAL_SERVER
+      - --entrypoints.https.http.tls.domains[1].main=$DOMAINNAME_CLOUD_SERVER
+      - --entrypoints.https.http.tls.domains[1].sans=*.$DOMAINNAME_CLOUD_SERVER
       - --providers.docker.network=proxy
       - --providers.file.directory=/rules
       - --providers.file.watch=true

@@ -1,0 +1,78 @@
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: always
+    volumes:
+      - ./wp:/var/www/html
+    environment:
+      TZ: $TZ
+      WORDPRESS_DB_HOST: wordpress-db
+      WORDPRESS_DB_USER: $WP_USER
+      WORDPRESS_DB_PASSWORD: $WP_DB_PASSWORD
+      WORDPRESS_DB_NAME: $WP_DB
+    labels:
+      traefik.enable: true
+      traefik.http.routers.nginx-rtr.entrypoints: https
+      traefik.http.routers.nginx-rtr.rule: Host(`$WP_FQDN`) || Host(`www.$WP_FQDN`)
+      traefik.http.routers.nginx-rtr.middlewares: chain-no-auth-website@file
+      traefik.http.routers.nginx-rtr.service: nginx-svc
+      traefik.http.services.nginx-svc.loadbalancer.server.port: 80
+    networks:
+      - proxy
+      - default
+    depends_on:
+      - wordpress-db
+
+  wordpress-db:
+    image: mariadb
+    container_name: wordpress-db
+    restart: always
+    environment:
+      MYSQL_USER: $WP_USER
+      MYSQL_PASSWORD: $WP_DB_PASSWORD
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: $WP_DB
+    volumes:
+      - ./db:/var/lib/mysql/
+
+  matomo-db:
+    image: mariadb
+    container_name: matomo-db
+    restart: always
+    environment:
+      MYSQL_USER: MATOMO_USER
+      MYSQL_PASSWORD: $MATOMO_DB_PASSWORD
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: $MATOMO_DB
+    volumes:
+      - ./matomo/db:/var/lib/mysql/
+
+  matomo:
+    image: matomo:latest
+    container_name: matomo
+    restart: always
+    depends_on:
+      - matomo-db
+    volumes:
+      - ./matomo/config:/var/www/html
+    environment:
+      TZ: $TZ
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_USERNAME: MATOMO_USER
+      MATOMO_DATABASE_PASSWORD: $MATOMO_DB_PASSWORD
+      MATOMO_DATABASE_DBNAME: $MATOMO_DB
+    labels:
+      traefik.enable: true
+      traefik.http.routers.matomo-rtr.entrypoints: https
+      traefik.http.routers.matomo-rtr.rule: Host(`$MATOMO_FQDN`)
+      traefik.http.routers.matomo-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.matomo-rtr.service: matomo-svc
+      traefik.http.services.matomo-svc.loadbalancer.server.port: 80
+    networks:
+      - proxy
+      - default
+
+networks:
+  proxy:
+    external: true

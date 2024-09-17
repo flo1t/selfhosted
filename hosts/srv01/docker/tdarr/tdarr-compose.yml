@@ -1,0 +1,42 @@
+services:
+  tdarr:
+    container_name: tdarr
+    image: ghcr.io/haveagitgat/tdarr:latest
+    restart: always
+    ports:
+      - 8266:8266
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+      UMASK_SET: 002
+      webUIPort: 8265
+      serverPort: 8266
+      sererIP: 0.0.0.0
+      internalNode: true
+      nodeID: tdarr-node-internal
+      inContainer: true
+      apiKey: $TDARR_API_KEY
+      ffmpegVersion: 6
+    volumes:
+      - ./server:/app/server
+      - ./configs:/app/configs
+      - ./logs:/app/logs
+      - /mnt/media/shows:/media/shows
+      - /mnt/media/movies:/media/movies
+      - /mnt/media/cache:/temp
+    devices:
+      - /dev/dri:/dev/dri
+    labels:
+      traefik.enable: true
+      traefik.http.routers.tdarr-rtr.entrypoints: https
+      traefik.http.routers.tdarr-rtr.rule: Host(`$FQDN`)
+      traefik.http.routers.tdarr-rtr.middlewares: chain-authentik-auth@file
+      traefik.http.routers.tdarr-rtr.service: tdarr-svc
+      traefik.http.services.tdarr-svc.loadbalancer.server.port: 8265
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

@@ -8,6 +8,7 @@ Furthermore, the aim is to describe the installation and configuration of all ap
 
 ## ToDo
 - Implement README.md for all services
+- Remove setup-files when all services are documented
 
 ## Structure of this repository
 | Folder | Purpose |

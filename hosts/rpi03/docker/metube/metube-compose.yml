@@ -1,0 +1,14 @@
+services:
+  metube:
+    image: ghcr.io/alexta69/metube:latest
+    container_name: metube
+    restart: always
+    ports:
+      - "8081:8081"
+    volumes:
+      - /mnt/media/downloads/metube:/downloads
+    environment:
+      UID: $UID
+      GID: $GID
+    labels:
+      deunhealth.restart.on.unhealthy: true

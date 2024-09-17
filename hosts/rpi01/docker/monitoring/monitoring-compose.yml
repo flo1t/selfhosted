@@ -1,0 +1,72 @@
+services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    restart: always
+    ports:
+      - "8086:8086"
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./influxdb/config:/etc/influxdb2
+      - ./influxdb/db:/var/lib/influxdb2
+    environment:
+      TZ: $TZ
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    hostname: telegraf
+    restart: always
+    network_mode: host
+    volumes:
+      - ./telegraf:/etc/telegraf
+      - /:/hostfs:ro
+      - /etc:/hostfs/etc:ro
+      - /proc:/hostfs/proc:ro
+      - /sys:/hostfs/sys:ro
+      - /var/run/utmp:/var/run/utmp:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: $TZ
+      HOST_ETC: /hostfs/etc
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_MOUNT_PREFIX: /hostfs
+    depends_on:
+      - influxdb
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3003:3003"
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./grafana:/var/lib/grafana
+    user: "$PUID"
+    environment:
+      TZ: $TZ
+      GF_SERVER_DOMAIN: $GRAFANA_SERVER
+      GF_SERVER_ROOT_URL: https://$GRAFANA_SERVER
+      GF_SERVER_HTTP_PORT: 3003
+      GF_AUTH_GENERIC_OAUTH_ENABLED: true
+      GF_AUTH_GENERIC_OAUTH_NAME: authentik
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: $AUTH_CLIENT
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: $AUTH_SECRET
+      GF_AUTH_GENERIC_OAUTH_SCOPES: openid profile email
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: $AUTH_URL/application/o/authorize/
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: $AUTH_URL/application/o/token/
+      GF_AUTH_GENERIC_OAUTH_API_URL: $AUTH_URL/application/o/userinfo/
+      GF_AUTH_SIGNOUT_REDIRECT_URL: $AUTH_URL/application/o/$AUTH_SLUG/end-session/
+      GF_AUTH_OAUTH_AUTO_LOGIN: true
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: contains(groups, '$AUTH_ADMIN_GROUP') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+    healthcheck:
+      test: "curl -sf http://localhost:3003/healthz || exit 1"
+      interval: 1m
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - influxdb

@@ -1,0 +1,21 @@
+name: Stop simultaneous Jellyfin streams
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  Kill Jellyfin Streams:
+    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-latest
+      volumes:
+        - /data:/opt/hostedtoolcache
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Stop Jellyfin Streams
+      run: python ${{ gitea.workspace }}/.gitea/scripts/stop-jellyfin-streams.py --jellyfin_api_key=${{ secrets.JELLYFIN_API_KEY }} --jellyfin_url=${{ vars.JELLYFIN_URL }} --discord_url=${{ secrets.DISCORD_JELLYFIN_MAINT_URL }}

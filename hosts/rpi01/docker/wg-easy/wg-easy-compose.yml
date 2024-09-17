@@ -1,0 +1,32 @@
+services:
+  wg-easy:
+    image: weejewel/wg-easy:latest
+    container_name: wg-easy
+    restart: always
+    ports:
+      - "$PORT:51820/udp"
+      - "51821:51821/tcp"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - ./wg-easy:/etc/wireguard
+    environment:
+      WG_HOST: $HOST
+      PASSWORD: $PASSWORD
+      WG_PORT: $PORT
+      WG_DEFAULT_ADDRESS: 10.8.0.x
+      WG_DEFAULT_DNS: $DNS_SERVER, 8.8.8.8
+      #WG_ALLOWED_IPS: $NETWORK # limit access to LAN (just relevant for the config file..)
+      WG_POST_UP:
+        iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE;
+        iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT;
+        iptables -A FORWARD -i wg0 -s 10.8.0.2/32 -j ACCEPT;
+        iptables -A FORWARD -o wg0 -d 10.8.0.2/32 -j ACCEPT;
+        iptables -A FORWARD -i wg0 -s 10.8.0.3/32 -d $NAS_IP/32 -j ACCEPT;
+        iptables -A FORWARD -o wg0 -s $NAS_IP/32 -d 10.8.0.3/32 -j ACCEPT;
+        iptables -A FORWARD -i wg0 -j DROP;
+        iptables -A FORWARD -o wg0 -j DROP;

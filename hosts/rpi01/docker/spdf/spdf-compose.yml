@@ -1,0 +1,16 @@
+services:
+  s-pdf:
+    image: frooodle/s-pdf:latest
+    container_name: s-pdf
+    restart: always
+    ports:
+        - '8082:8080'
+    volumes:
+        - ./ocr:/usr/share/tesseract-ocr/5/tessdata
+        - ./config:/configs
+    environment:
+        UI_APPNAME: floit PDF
+        UI_APPNAMENAVBAR: floit PDF
+        UI_HOMEDESCRIPTION: self hosted PDF tools
+        DOCKER_ENABLE_SECURITY: false
+        SYSTEM_DEFAULTLOCALE: de-DE

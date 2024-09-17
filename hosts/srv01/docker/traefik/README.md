@@ -99,6 +99,20 @@ compress
 Test it: `sudo logrotate /etc/logrotate.conf --debug`
 Optional: Execute it once: `sudo logrotate /etc/logrotate.conf`
 
+#### Increase watches
+When I added too many static configuration files, the whole Traefik configuration failed and I retrieved the following error: "ERR Cannot start the provider *file.Provider error="error adding file watcher: no space left on device".
+To prevent this, I had to increase the inotify watches on the host and restart traefik:
+```sh
+sudo sysctl fs.inotify.max_user_instances=8192
+sudo sysctl fs.inotify.max_user_watches=524288
+sudo sysctl -p
+docker restart traefik
+
+# make it permanent:
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
+echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf
+```
+
 ### Setup new applications
 If the Docker container is running on the same host then the Traefik container, it can dynamically be added to Traefik. For this you need to add the Docker container to the same network as Traefik ("proxy" in my place).
 If the service is on a different host than the Traefik container or not a Docker container, it can be added with static configuration files.

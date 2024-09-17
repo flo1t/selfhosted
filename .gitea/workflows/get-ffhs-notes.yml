@@ -1,0 +1,63 @@
+name: Retrieve FFHS Notes
+on:
+  #schedule:
+    #- cron: "*/30 7-18 * * MON-FRI"
+  push:
+    paths:
+      - .gitea/workflows/get_ffhs_notes.yml
+      - .gitea/scripts/get_ffhs_notes.py
+
+jobs:
+  Retrieve FFHS Notes:
+    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-latest
+      volumes:
+        - /data:/opt/hostedtoolcache
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install python dependencies
+      run: |
+        echo '
+        Package: *
+        Pin: release o=LP-PPA-mozillateam
+        Pin-Priority: 1001
+
+        Package: firefox
+        Pin: version 1:1snap1-0ubuntu2
+        Pin-Priority: -1
+        ' | sudo tee /etc/apt/preferences.d/mozilla-firefox
+        
+        #echo "Check if Firefox and Geckodriver are installed"
+        #if ! [ -x "$(command -v firefox)" -a -x "$(command -v geckodriver)" ]; then
+        #  echo "Firefox and Geckodriver are not installed, installing them"
+        #  add-apt-repository ppa:mozillateam/ppa
+        #  apt update -y && apt install -y firefox firefox-geckodriver
+        #else
+        #  echo "Firefox and Geckodriver are already installed"
+        #fi
+
+        echo "Check if pip is installed"
+        if ! [ -x "$(command -v pip)" ]; then    
+          python -m pip install --upgrade pip
+        else
+          echo "Pip is already installed"
+        fi
+
+        pip install -U selenium
+    - name: Add mozilla repository
+      run: |
+        add-apt-repository ppa:mozillateam/ppa
+        #apt update -y
+    - name: Install apt packages
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: firefox firefox-geckodriver
+        version: 1.0
+    - name: Retrieve FFHS notes
+      run: python ${{ gitea.workspace }}/.gitea/scripts/get-ffhs-notes.py --password=${{ secrets.EDUID_PW }} --username=${{ vars.EMAIL }} --discord_url=${{ secrets.DISCORD_FFHS_URL }}

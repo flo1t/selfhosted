@@ -1,0 +1,49 @@
+services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    restart: always
+    ports:
+      - "80:80/tcp"
+      - "53:53/tcp"
+      - "$IP:53:53/udp"
+    cap_add:
+        - NET_ADMIN
+    volumes:
+      - './pihole/:/etc/pihole/'
+      - './dnsmasq.d/:/etc/dnsmasq.d/'
+    environment:
+      TZ: $TZ
+      WEBPASSWORD: $WEBPASSWORD
+      VIRTUAL_HOST: $HOST.$DOMAIN
+      FTLCONF_LOCAL_IPV4: '$IP'
+      PIHOLE_DNS_: 1.1.1.1;1.0.0.1
+      DNSMASQ_LISTENING: all
+      DHCP_ACTIVE: 'true'
+      DHCP_START: $DHCP_START
+      DHCP_END: $DHCP_END
+      DHCP_ROUTER: $DHCP_ROUTER
+      PIHOLE_DOMAIN: $DOMAIN
+      DHCP_LEASETIME: 24
+    depends_on:
+      - dhcphelper
+    networks:
+      backend:
+        ipv4_address: '172.31.0.100'
+
+  dhcphelper:
+    container_name: dhcphelper
+    build: ./dhcp-helper
+    restart: always
+    network_mode: "host"
+    command: -s 172.31.0.100
+    cap_add:
+      - NET_ADMIN
+    labels:
+      com.centurylinklabs.watchtower.enable: false
+
+networks:
+  backend:
+    ipam:
+      config:
+        - subnet: 172.31.0.0/16

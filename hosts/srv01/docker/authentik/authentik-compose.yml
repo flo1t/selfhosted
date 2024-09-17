@@ -82,14 +82,14 @@ services:
       - authentik-db
       - authentik-redis
 
-  certbot:
-    container_name: authentik-certbot
-    image: certbot/dns-cloudflare:latest
-    volumes:
-      - ./certs/:/etc/letsencrypt
-      - ./cloudflare.ini:/config/cloudflare.ini
-      - ./certbot:/var/log/letsencrypt
-    command: certonly --non-interactive --register-unsafely-without-email --dns-cloudflare --dns-cloudflare-credentials /config/cloudflare.ini --agree-tos -d $HOST.$DOMAIN --server https://acme-v02.api.letsencrypt.org/directory
+#  certbot:
+#    container_name: authentik-certbot
+#    image: certbot/dns-cloudflare:latest
+#    volumes:
+#      - ./certs/:/etc/letsencrypt
+#      - ./cloudflare.ini:/config/cloudflare.ini
+#      - ./certbot:/var/log/letsencrypt
+#    command: certonly --non-interactive --register-unsafely-without-email --dns-cloudflare --dns-cloudflare-credentials /config/cloudflare.ini --agree-tos -d $HOST.$DOMAIN --server https://acme-v02.api.letsencrypt.org/directory
 
 networks:
   proxy:

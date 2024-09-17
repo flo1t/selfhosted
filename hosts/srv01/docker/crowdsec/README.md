@@ -111,6 +111,12 @@ Restart the Docker container:
 `docker compose -f ~docker/crowdsec/crowdsec-compose.yml up -d --force-recreate`
 
 Don't forget to add a Traefik middleware and append it to your middleware chains. The middleware is visible in the traefik configuration folder here on GitHub.
+You also have to add the crowdsec network to the Traefik compose file and restart traefik afterwards:
+```yml
+...
+  crowdsec:
+    external: true
+```
 
 #### Add Cloudflare bouncer
 Generate an API-Key:
