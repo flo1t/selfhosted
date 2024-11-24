@@ -22,8 +22,9 @@ services:
       - ../vaultwarden/logs:/var/log/vaultwarden/logs:ro
       - ../teamspeak/data/logs:/var/log/teamspeak/teamspeak/logs:ro
     environment:
-      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/iptables crowdsecurity/nextcloud Dominic-Wagner/vaultwarden LePresidente/jellyfin LePresidente/jellyseerr crowdsecurity/teamspeak3"
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/iptables crowdsecurity/nextcloud Dominic-Wagner/vaultwarden LePresidente/jellyfin LePresidente/jellyseerr crowdsecurity/teamspeak3 firix/authentik"
       CUSTOM_HOSTNAME: $HOSTNAME
+      GID: $GID
     depends_on:
       - crowdsec-db
     networks:
