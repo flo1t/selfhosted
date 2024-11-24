@@ -25,7 +25,7 @@ services:
       - wordpress-db
 
   wordpress-db:
-    image: mariadb
+    image: mariadb:11.6.2
     container_name: wordpress-db
     restart: always
     environment:
@@ -37,7 +37,7 @@ services:
       - ./db:/var/lib/mysql/
 
   matomo-db:
-    image: mariadb
+    image: mariadb:11.6.2
     container_name: matomo-db
     restart: always
     environment:

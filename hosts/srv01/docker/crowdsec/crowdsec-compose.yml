@@ -32,7 +32,7 @@ services:
         ipv4_address: 172.29.0.2
 
   crowdsec-db:
-    image: mariadb
+    image: mariadb:11.6.2
     container_name: crowdsec-db
     hostname: crowdsec-db
     restart: always
