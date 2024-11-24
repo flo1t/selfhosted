@@ -14,7 +14,6 @@ services:
       - './dnsmasq.d/:/etc/dnsmasq.d/'
     environment:
       TZ: $TZ
-      WEBPASSWORD: $WEBPASSWORD
       VIRTUAL_HOST: $HOST.$DOMAIN
       FTLCONF_LOCAL_IPV4: '$IP'
       PIHOLE_DNS_: 1.1.1.1;1.0.0.1

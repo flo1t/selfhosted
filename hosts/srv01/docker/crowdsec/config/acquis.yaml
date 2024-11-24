@@ -39,3 +39,9 @@ filenames:
   - /var/log/teamspeak/teamspeak/logs/ts3server_*.log
 labels:
   type: ts3
+---
+source: docker
+container_name:
+ - authentik-server
+labels:
+  type: authentik
