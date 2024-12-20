@@ -1,14 +1,13 @@
 # floit - selfhosted
 
 ## Description
-This repository contains all docker-compose and configuration files for apps described on floit.ch.
-Furthermore, the aim is to describe the installation and configuration of all apps.
+This repository includes all Docker Compose and configuration files for the applications featured on floit.ch, with the goal of providing detailed instructions for their installation and configuration.
 
 ## Overview
 
 ## ToDo
 - Implement README.md for all services
-- Remove setup-files when all services are documented
+- Add a schematic overview
 
 ## Structure of this repository
 | Folder | Purpose |
@@ -17,7 +16,6 @@ Furthermore, the aim is to describe the installation and configuration of all ap
 | .gitea/workflows | gitea actions |
 | hosts/all | subfolders will be published to all servers |
 | hosts/hostname | subfolders will be published to *hostname* |
-| templates | template files for docker compose, scripts, etc. |
 
 ## Host setup
 | Folder | Purpose |

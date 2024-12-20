@@ -1,8 +1,6 @@
-import os
 import urllib.request
-import argparse, sys
+import argparse
 from json import load, dumps
-import datetime
 
 parser=argparse.ArgumentParser()
 parser.add_argument("--jellyfin_api_key")
@@ -44,8 +42,8 @@ else:
 for user in users_with_active_sessions:
   if len(users_with_active_sessions[user]) > 1:
     print(f"User {user} has {len(users_with_active_sessions[user])} simultaneuos streams.")
-    if user in EXCLUDED_USERS:
-      print(f"But it's {user} and therefore allowed to have simultaneous streams.")
+    if user in EXCLUDED_USERS and len(users_with_active_sessions[user]) < 4:
+      print(f"But it's {user} and therefore allowed to have 3 simultaneous streams.")
     else:
       for session in users_with_active_sessions[user]:
         id = session[0]
@@ -54,7 +52,7 @@ for user in users_with_active_sessions:
           req = urllib.request.urlopen(urllib.request.Request(JELLYFIN_URL + "/Sessions/" + id  + "/Message?api_key=" + API_KEY, dumps(data_stop).encode("utf-8"), headers))
         except:
           print(f"Couldn't inform user {user} about killing session {id}")
-          discord_message = {'content':f'Simultaneous playbacks: Informing ${user} about killing session {id} failed','username':'Gitea Action'}
+          discord_message = {'content':f'Simultaneous playbacks: Informing {user} about killing session {id} failed','username':'Gitea Action'}
           req = urllib.request.urlopen(urllib.request.Request(DISCORD_JELLYFIN_URL, dumps(discord_message).encode("utf-8"), headers))
         try:
           req = urllib.request.urlopen(urllib.request.Request(JELLYFIN_URL + "/Sessions/" + id  + "/Playing/Stop?api_key=" + API_KEY, method="POST"))
