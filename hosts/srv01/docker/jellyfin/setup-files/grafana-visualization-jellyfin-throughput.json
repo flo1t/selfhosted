@@ -1,96 +1,135 @@
 {
-    "datasource": {
-      "type": "influxdb",
-      "uid": "b1962428-9fd6-4517-8c24-45be5e165d2e"
-    },
-    "fieldConfig": {
-      "defaults": {
-        "mappings": [],
-        "thresholds": {
-          "mode": "absolute",
-          "steps": [
-            {
-              "color": "super-light-purple",
-              "value": null
-            }
-          ]
+  "id": 65128,
+  "type": "timeseries",
+  "title": "Active Jellyfin streams",
+  "gridPos": {
+    "x": 18,
+    "y": 15,
+    "h": 6,
+    "w": 6
+  },
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "line",
+        "lineInterpolation": "linear",
+        "barAlignment": 0,
+        "barWidthFactor": 0.6,
+        "lineWidth": 1,
+        "fillOpacity": 0,
+        "gradientMode": "none",
+        "spanNulls": false,
+        "insertNulls": false,
+        "showPoints": "auto",
+        "pointSize": 5,
+        "stacking": {
+          "mode": "none",
+          "group": "A"
         },
-        "color": {
-          "mode": "thresholds"
+        "axisPlacement": "auto",
+        "axisLabel": "",
+        "axisColorMode": "text",
+        "axisBorderShow": false,
+        "scaleDistribution": {
+          "type": "linear"
         },
-        "decimals": 0,
-        "displayName": "${__field.name}",
-        "min": 0,
-        "unit": "Bps"
+        "axisCenteredZero": false,
+        "hideFrom": {
+          "tooltip": false,
+          "viz": false,
+          "legend": false
+        },
+        "thresholdsStyle": {
+          "mode": "off"
+        },
+        "lineStyle": {
+          "fill": "solid"
+        }
       },
-      "overrides": []
-    },
-    "gridPos": {
-      "h": 4,
-      "w": 6,
-      "x": 18,
-      "y": 11
-    },
-    "id": 65117,
-    "options": {
-      "reduceOptions": {
-        "values": false,
-        "calcs": [
-          "lastNotNull"
-        ],
-        "fields": ""
+      "color": {
+        "mode": "palette-classic"
       },
-      "orientation": "auto",
-      "showThresholdLabels": false,
-      "showThresholdMarkers": true,
-      "sizing": "auto",
-      "minVizWidth": 75,
-      "minVizHeight": 75
-    },
-    "pluginVersion": "11.1.3",
-    "targets": [
-      {
-        "datasource": {
-          "type": "influxdb",
-          "uid": "b1962428-9fd6-4517-8c24-45be5e165d2e"
-        },
-        "groupBy": [
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
           {
-            "params": [
-              "$__interval"
-            ],
-            "type": "time"
+            "color": "green",
+            "value": null
           },
           {
-            "params": [
-              "null"
-            ],
-            "type": "fill"
+            "color": "red",
+            "value": 80
           }
-        ],
-        "orderByTime": "ASC",
-        "policy": "default",
-        "query": "from(bucket: \"telegraf\")\r\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\r\n  |> filter(fn: (r) => r._measurement == \"docker_container_net\" and (r._field == \"rx_bytes\" or r._field == \"tx_bytes\"))\r\n  |> filter(fn: (r) => r.container_name == \"jellyfin\")\r\n  |> aggregateWindow(every: ${inter}, fn: last, createEmpty: false)\r\n  |> derivative(unit:1s, nonNegative: true, columns: [\"_value\"])",
-        "rawQuery": true,
-        "refId": "A",
-        "resultFormat": "time_series",
-        "select": [
-          [
-            {
-              "params": [
-                "value"
-              ],
-              "type": "field"
-            },
-            {
-              "params": [],
-              "type": "mean"
-            }
-          ]
-        ],
-        "tags": []
-      }
-    ],
-    "title": "Jellyfin throughput",
-    "type": "gauge"
+        ]
+      },
+      "decimals": 0,
+      "displayName": "Active Streams",
+      "min": 0,
+      "noValue": "0",
+      "unit": "none"
+    },
+    "overrides": []
+  },
+  "pluginVersion": "11.4.0",
+  "targets": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "b1962428-9fd6-4517-8c24-45be5e165d2e"
+      },
+      "groupBy": [
+        {
+          "params": [
+            "$__interval"
+          ],
+          "type": "time"
+        },
+        {
+          "params": [
+            "null"
+          ],
+          "type": "fill"
+        }
+      ],
+      "orderByTime": "ASC",
+      "policy": "default",
+      "query": "from(bucket: \"telegraf\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"jellyfin\")\n  |> filter(fn: (r) => r[\"_field\"] == \"IsPaused\" or r[\"_field\"] == \"Name\")\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> filter(fn: (r) => r[\"IsPaused\"] == false and exists r[\"Name\"])\n  |> group(columns: [\"_time\"])\n  |> count(column: \"Id\")\n  |> group()\n  |> aggregateWindow(every: ${inter}, fn: last, createEmpty: true, column: \"Id\")\n  |> yield(name: \"sum\")",
+      "rawQuery": true,
+      "refId": "A",
+      "resultFormat": "time_series",
+      "select": [
+        [
+          {
+            "params": [
+              "value"
+            ],
+            "type": "field"
+          },
+          {
+            "params": [],
+            "type": "mean"
+          }
+        ]
+      ],
+      "tags": []
+    }
+  ],
+  "datasource": {
+    "type": "influxdb",
+    "uid": "b1962428-9fd6-4517-8c24-45be5e165d2e"
+  },
+  "options": {
+    "tooltip": {
+      "mode": "single",
+      "sort": "none",
+      "maxHeight": 600
+    },
+    "legend": {
+      "showLegend": true,
+      "displayMode": "list",
+      "placement": "bottom",
+      "calcs": []
+    }
   }
+}

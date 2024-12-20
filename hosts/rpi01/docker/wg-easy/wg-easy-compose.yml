@@ -1,6 +1,6 @@
 services:
   wg-easy:
-    image: weejewel/wg-easy:latest
+    image: ghcr.io/wg-easy/wg-easy:nightly
     container_name: wg-easy
     restart: always
     ports:
@@ -16,16 +16,20 @@ services:
       - ./config:/etc/wireguard
     environment:
       WG_HOST: $HOST
-      WG_PORT: $PORT
+      WG_PORT: 51820
       WG_DEFAULT_ADDRESS: 10.8.0.x
-      WG_DEFAULT_DNS: $DNS_SERVER, 8.8.8.8
-      #WG_ALLOWED_IPS: $NETWORK # limit access to LAN (just relevant for the config file..)
+      WG_DEFAULT_DNS: $DNS_SERVER, 1.1.1.1
       WG_POST_UP:
         iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE;
         iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT;
         iptables -A FORWARD -i wg0 -s 10.8.0.2/32 -j ACCEPT;
         iptables -A FORWARD -o wg0 -d 10.8.0.2/32 -j ACCEPT;
-        iptables -A FORWARD -i wg0 -s 10.8.0.3/32 -d $NAS_IP/32 -j ACCEPT;
-        iptables -A FORWARD -o wg0 -s $NAS_IP/32 -d 10.8.0.3/32 -j ACCEPT;
+        iptables -A FORWARD -i wg0 -s 10.8.0.3/32 -j ACCEPT;
+        iptables -A FORWARD -o wg0 -d 10.8.0.3/32 -j ACCEPT;
+        iptables -A FORWARD -i wg0 -s 10.8.0.4/32 -d $NAS_IP/32 -j ACCEPT;
+        iptables -A FORWARD -o wg0 -s $NAS_IP/32 -d 10.8.0.4/32 -j ACCEPT;
         iptables -A FORWARD -i wg0 -j DROP;
         iptables -A FORWARD -o wg0 -j DROP;
+      ENABLE_PROMETHEUS_METRICS: true
+      #PROMETHEUS_METRICS_PASSWORD: $PASSWORD_HASH
+      UI_TRAFFIC_STATS: true

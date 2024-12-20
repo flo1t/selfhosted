@@ -3,10 +3,10 @@
   "type": "state-timeline",
   "title": "Jellyfin streams",
   "gridPos": {
-    "x": 18,
-    "y": 15,
-    "h": 6,
-    "w": 6
+    "x": 0,
+    "y": 38,
+    "h": 10,
+    "w": 24
   },
   "fieldConfig": {
     "defaults": {
@@ -39,7 +39,7 @@
     },
     "overrides": []
   },
-  "pluginVersion": "11.3.0",
+  "pluginVersion": "11.4.0",
   "targets": [
     {
       "datasource": {
