@@ -40,14 +40,6 @@ http:
         - chain-authentik-auth
       service: prowlarr-svc
 
-    qbittorrent-rtr:
-      rule: "Host(`qbit.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
-      entryPoints:
-        - https
-      middlewares:
-        - chain-authentik-auth
-      service: qbittorrent-svc
-
     sabnzbd-rtr:
       rule: "Host(`sabnzbd.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
       entryPoints:
@@ -77,10 +69,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.1.12:9696"
-    qbittorrent-svc:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.1.12:8080"
     sabnzbd-svc:
       loadBalancer:
         servers:

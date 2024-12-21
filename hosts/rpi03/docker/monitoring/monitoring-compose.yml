@@ -20,5 +20,3 @@ services:
       HOST_PROC: /hostfs/proc
       HOST_SYS: /hostfs/sys
       HOST_MOUNT_PREFIX: /hostfs
-    labels:
-      deunhealth.restart.on.unhealthy: true

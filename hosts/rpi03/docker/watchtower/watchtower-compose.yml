@@ -14,5 +14,3 @@ services:
       WATCHTOWER_NOTIFICATION_URL: discord://$DISCORD_TOKEN_WEBHOOK
       WATCHTOWER_SCHEDULE: 0 0 5 * * 0,2-6
       TZ: $TZ
-    labels:
-      deunhealth.restart.on.unhealthy: true

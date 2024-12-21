@@ -12,5 +12,3 @@ services:
       PUID: $PUID
       PGID: $PGID
       TZ: $TZ
-    labels:
-      deunhealth.restart.on.unhealthy: true

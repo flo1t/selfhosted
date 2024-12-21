@@ -18,5 +18,3 @@ services:
       AGENT_USERNAME: $HOSTNAME
       AGENT_PASSWORD: $CROWDSEC_AGENT_PASSWORD
       LOCAL_API_URL: http://$LOCAL_API_IP:8082
-    labels:
-      deunhealth.restart.on.unhealthy: true
