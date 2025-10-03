@@ -3,8 +3,6 @@ on:
   push:
     paths:
       - hosts/**
-  push:
-    paths:
       - .gitea/workflows/deploy_changes_to_hosts.yml
 
 jobs:
@@ -45,7 +43,7 @@ jobs:
           dockerpath="$homedir/docker"
           domain="${{ vars.LOCAL_DOMAIN }}"
           ssh_user="${{ secrets.SSH_USER }}"
-          declare -A HOSTS=( ["rpi01"]="${{ secrets.SSH_RPI01_PRIVATE_KEY }}" ["rpi03"]="${{ secrets.SSH_RPI03_PRIVATE_KEY }}" ["srv01"]="${{ secrets.SSH_SRV01_PRIVATE_KEY }}" )
+          declare -A HOSTS=( ["rpi01"]="${{ secrets.SSH_RPI01_PRIVATE_KEY }}" ["f-vsrv-01"]="${{ secrets.SSH_F_VSRV_01_PRIVATE_KEY }}" )
           for host in "${!HOSTS[@]}"; do
             echo "Add SSH key for '$host'"
             install -m 600 -D /dev/null ~/.ssh/id_rsa_$host_gitea_runner
@@ -53,7 +51,7 @@ jobs:
             (ssh-keyscan -H $host.$domain > ~/.ssh/known_hosts) 2> /dev/null
             for dir in $(find "${{ gitea.workspace }}/hosts" -mindepth 1 -maxdepth 1 -type d); do
               folder=$(basename $dir)
-              if [[ "$folder" = "$host" || "$folder" = "all"  ]]; then
+              if [[ "$folder" = "$host" || "$folder" = "all" ]]; then
                 echo "Copy changed files from '$dir' to '$host'"
                 changed_files=$(rsync -e "ssh -i ~/.ssh/id_rsa_$host_gitea_runner" -a $dir/ $ssh_user@$host.$domain:$homedir --out-format="%f")
                 if [ -n "$changed_files" ]; then
@@ -61,17 +59,17 @@ jobs:
                   echo "Add +x permission to $scriptpath/*"
                   ssh -i ~/.ssh/id_rsa_$host_gitea_runner $ssh_user@$host.$domain "chmod +x $scriptpath/*"
                 fi
-                changed_containers=$(echo "$changed_files" | grep -vE '(README\.md|setup-files)' | sed -n 's#.*/docker/\([^/]*\)/.*#\1#p' | sort -u)
+                changed_containers=$(echo "$changed_files" | grep -vE '(README\.md|setup-files|_old)' | sed -n 's#.*/docker/\([^/]*\)/.*#\1#p' | sort -u)
                 for container in $changed_containers; do
                   if [[ "$container" != "gitea" ]]; then
                     echo "Container '$container' changed: Rebuilding docker container"
                     ssh -i ~/.ssh/id_rsa_$host_gitea_runner $ssh_user@$host.$domain "find $dockerpath/$container -mindepth 1 -maxdepth 1 -type f -name *-compose.yml -exec docker compose -f {} up -d --remove-orphans --force-recreate \;"
                   else
                     echo "Skipping '$container': It will latest be rebuild during the backup job"
-                  fi                
+                  fi
                 done
               fi
-            done 
+            done
           done
       - name: Cleanup SSH credentials
         run: |

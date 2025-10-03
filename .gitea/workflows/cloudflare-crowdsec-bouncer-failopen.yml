@@ -1,0 +1,27 @@
+name: Update Cloudflare Crowdsec worker routes to fail open
+on:
+  schedule:
+    - cron: "3 * * * *"
+  push:
+    paths:
+    - ".gitea/scripts/cloudflare-crowdsec-bouncer-failopen.py"
+    - ".gitea/workflows/cloudflare-crowdsec-bouncer-failopen.yml"
+
+jobs:
+  Kill Jellyfin Streams:
+    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-latest
+      volumes:
+        - /data:/opt/hostedtoolcache
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Update Cloudflare Crowdsec worker routes
+      run:  |
+        python3 -m pip install --no-cache-dir requests
+        python3 ${{ gitea.workspace }}/.gitea/scripts/cloudflare-crowdsec-bouncer-failopen.py --zone=${{ vars.CLOUDFLARE_ZONE_ID }} --token=${{ secrets.CLOUDFLARE_API_TOKEN }} --route_patterns=${{ vars.CLOUDFLARE_ROUTE_PATTERNS }} --discord=${{ secrets.DISCORD_NOTIFICATIONS_URL }}

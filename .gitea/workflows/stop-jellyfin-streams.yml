@@ -20,6 +20,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Stop Jellyfin Streams
-      run: python ${{ gitea.workspace }}/.gitea/scripts/stop-jellyfin-streams.py --jellyfin_api_key=${{ secrets.JELLYFIN_API_KEY }} --jellyfin_url=${{ vars.JELLYFIN_URL }} --discord_url=${{ secrets.DISCORD_JELLYFIN_MAINT_URL }} --excluded_users=${{ vars.JELLYFIN_MULTIPLE_STREAMS }}
+      run:  |
+        python3 -m pip install --no-cache-dir requests
+        python3 ${{ gitea.workspace }}/.gitea/scripts/stop-jellyfin-streams.py --jellyfin_api_key=${{ secrets.JELLYFIN_API_KEY }} --jellyfin_url=${{ vars.JELLYFIN_URL }} --discord_url=${{ secrets.DISCORD_NOTIFICATIONS_URL }} --excluded_users=${{ vars.JELLYFIN_MULTIPLE_STREAMS }}

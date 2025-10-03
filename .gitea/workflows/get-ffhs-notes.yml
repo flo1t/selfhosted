@@ -1,11 +1,11 @@
 name: Retrieve FFHS Notes
 on:
   #schedule:
-    #- cron: "*/30 7-18 * * MON-FRI"
+  #  - cron: "*/30 7-18 * * MON-FRI"
   push:
     paths:
-      - .gitea/workflows/get_ffhs_notes.yml
-      - .gitea/scripts/get_ffhs_notes.py
+      - .gitea/workflows/get-ffhs-notes.yml
+      - .gitea/scripts/get-ffhs-notes.py
 
 jobs:
   Retrieve FFHS Notes:
@@ -32,7 +32,7 @@ jobs:
         Pin: version 1:1snap1-0ubuntu2
         Pin-Priority: -1
         ' | sudo tee /etc/apt/preferences.d/mozilla-firefox
-        
+
         #echo "Check if Firefox and Geckodriver are installed"
         #if ! [ -x "$(command -v firefox)" -a -x "$(command -v geckodriver)" ]; then
         #  echo "Firefox and Geckodriver are not installed, installing them"
@@ -43,7 +43,7 @@ jobs:
         #fi
 
         echo "Check if pip is installed"
-        if ! [ -x "$(command -v pip)" ]; then    
+        if ! [ -x "$(command -v pip)" ]; then
           python -m pip install --upgrade pip
         else
           echo "Pip is already installed"
