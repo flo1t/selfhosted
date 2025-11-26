@@ -1,0 +1,34 @@
+type: http          # Don't change
+name: http_default  # Must match the registered plugin in the profile
+
+log_level: info
+
+# group_wait: 30s
+# group_threshold:    # Amount of alerts that triggers a message before <group_wait> has expired, eg "10"
+# max_retry:          # Number of attempts to relay messages to plugins in case of error
+# timeout:            # Time to wait for response from the plugin before considering the attempt a failure, eg "10s"
+
+format: |
+  {
+    "content": null,
+    "embeds": [
+      {{range . -}}
+      {{$alert := . -}}
+      {{range .Decisions -}}
+      {
+        "title": "{{$alert.MachineID}}: {{.Scenario}}",
+        "description": "{{if $alert.Source.Cn -}}:flag_{{ $alert.Source.Cn | lower }}:{{else}}:pirate_flag:{{end}}{{$alert.Source.IP}} will get a {{.Type}} for the next {{.Duration}}. <https://www.shodan.io/host/{{$alert.Source.IP}}>",
+        "url": "https://db-ip.com/{{$alert.Source.IP}}",
+        "color": "16711680"
+      }
+      {{end -}}
+      {{end -}}
+    ]
+  }
+
+url: <discord webhook token>
+
+method: POST
+
+headers:
+  Content-Type: application/json

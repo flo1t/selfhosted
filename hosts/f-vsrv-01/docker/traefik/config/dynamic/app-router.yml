@@ -1,0 +1,16 @@
+http:
+  routers:
+    adguard-rtr:
+      rule: "Host(`adguard.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-no-auth
+      service: adguard-svc
+
+  services:
+    adguard-svc:
+      loadBalancer:
+        serversTransport: insecureTransport
+        servers:
+          - url: "http://192.168.1.1:8080/"

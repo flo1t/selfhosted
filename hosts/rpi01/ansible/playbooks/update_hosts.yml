@@ -12,6 +12,14 @@
     - name: Cleanup local repository and unused dependency packages
       apt: autoremove=yes clean=yes
 
+    - name: Cleanup docker environment
+      community.docker.docker_prune:
+        containers: true
+        images: true
+        networks: true
+        volumes: true
+        builder_cache: true
+
     - name: Check if a reboot is needed on all servers
       register: reboot_required_file
       stat: path=/var/run/reboot-required get_checksum=no

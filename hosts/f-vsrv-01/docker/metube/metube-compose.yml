@@ -1,0 +1,29 @@
+services:
+  metube:
+    image: ghcr.io/alexta69/metube:latest
+    container_name: metube
+    restart: always
+    volumes:
+      - /mnt/media/downloads/metube:/downloads
+    environment:
+      UID: $UID
+      GID: $GID
+    labels:
+      traefik.enable: true
+      traefik.http.routers.metube-rtr.entrypoints: https
+      traefik.http.routers.metube-rtr.rule: Host(`$FQDN`)
+      traefik.http.routers.metube-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.metube-rtr.service: metube-svc
+      traefik.http.services.metube-svc.loadbalancer.server.port: 8081
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

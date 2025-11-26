@@ -1,0 +1,38 @@
+services:
+  pbs:
+    image: ayufan/proxmox-backup-server:latest
+    container_name: pbs
+    restart: always
+    mem_limit: 2G
+    stop_signal: SIGHUP
+    volumes:
+      - ../../backup/pbs:/backups
+      - ./lib:/var/lib/proxmox-backup
+      - ./logs:/var/log/proxmox-backup
+      - ./etc:/etc/proxmox-backup
+      - ./cache:/cache
+    tmpfs:
+      - /run
+    environment:
+      TZ: $TZ
+    labels:
+      traefik.enable: true
+      traefik.http.routers.pbs-rtr.entrypoints: https
+      traefik.http.routers.pbs-rtr.rule: Host(`$FQDN`)
+      traefik.http.routers.pbs-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.pbs-rtr.service: pbs-svc
+      traefik.http.services.pbs-svc.loadbalancer.serversTransport: insecureTransport@file
+      traefik.http.services.pbs-svc.loadbalancer.server.port: 8007
+      traefik.http.services.pbs-svc.loadbalancer.server.scheme: https
+    healthcheck:
+      test: ["CMD-SHELL", "proxmox-backup-manager versions || exit 1"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

@@ -1,1 +1,14 @@
+# folders
+.git
 .env
+_old
+hosts/all/scripts/wol
+hosts/*/docker/jellyfin/web-config
+hosts/*/docker/monitoring/config
+hosts/*/docker/monitoring/telegraf
+hosts/*/docker/crowdsec/config/postoverflows/s01-whitelist/mywhitelist.yaml
+hosts/*/docker/crowdsec/cloudflare-bouncer
+hosts/*/docker/crowdsec/config
+hosts/*/docker/traefik/config/static/traefik.yml
+maintenance
+templates

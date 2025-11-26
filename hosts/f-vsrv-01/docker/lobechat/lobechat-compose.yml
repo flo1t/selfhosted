@@ -1,0 +1,126 @@
+services:
+  lobechat:
+    image: lobehub/lobe-chat-database:latest
+    container_name: lobechat
+    restart: always
+    environment:
+      TZ: $TZ
+      APP_URL: $APP_URL
+      KEY_VAULTS_SECRET: $KEY_VAULTS_SECRET
+      NEXT_AUTH_SECRET: $NEXT_AUTH_SECRET
+      DATABASE_URL: postgres://$LOBE_DB_USER:$LOBE_DB_PASSWORD@lobechat-db:5432/$LOBE_DB
+      S3_ENDPOINT: $S3_PUBLIC_DOMAIN
+      S3_PUBLIC_DOMAIN: $S3_PUBLIC_DOMAIN
+      S3_BUCKET: $S3_BUCKET
+      S3_ACCESS_KEY_ID: $S3_ACCESS_KEY_ID
+      S3_SECRET_ACCESS_KEY: $S3_SECRET_ACCESS_KEY
+      S3_ENABLE_PATH_STYLE: 1
+      NEXT_AUTH_SSO_PROVIDERS: authentik
+      AUTH_AUTHENTIK_ID: $AUTH_AUTHENTIK_ID
+      AUTH_AUTHENTIK_SECRET: $AUTH_AUTHENTIK_SECRET
+      AUTH_AUTHENTIK_ISSUER: $AUTH_AUTHENTIK_ISSUER
+      NEXTAUTH_URL: $NEXTAUTH_URL
+      DEEPSEEK_API_KEY: $DEEPSEEK_API_KEY
+      OPENAI_API_KEY: $OPENAI_API_KEY
+      PERPLEXITY_API_KEY: $PERPLEXITY_API_KEY
+      ANTHROPIC_API_KEY: $ANTHROPIC_API_KEY
+      GOOGLE_API_KEY: $GOOGLE_API_KEY
+      SEARCH_PROVIDERS: searxng
+      SEARXNG_URL: http://lobechat-searxng:8080
+      # LLM_VISION_IMAGE_USE_BASE64: 1 # enable this if there are such errors: "Route: [xai] ProviderBizError: Fetching images over plain http:// is not supported."
+      FEATURE_FLAGS: "-welcome_suggest"
+    depends_on:
+      lobechat-db:
+        condition: service_healthy
+      lobechat-minio:
+        condition: service_healthy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.lobechat-rtr.entrypoints: https
+      traefik.http.routers.lobechat-rtr.rule: Host(`$LOBECHAT_FQDN`)
+      traefik.http.routers.lobechat-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.lobechat-rtr.service: lobechat-svc
+      traefik.http.services.lobechat-svc.loadbalancer.server.port: 3210
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --no-verbose --tries=1 http://localhost:3210 > /dev/null 2>&1 || exit 1"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+      - default
+
+  lobechat-db:
+    image: pgvector/pgvector:pg17
+    container_name: lobechat-db
+    restart: always
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: $LOBE_DB
+      POSTGRES_USER: $LOBE_DB_USER
+      POSTGRES_PASSWORD: $LOBE_DB_PASSWORD
+      TZ: $TZ
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${LOBE_DB} -U ${LOBE_DB_USER} "]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  lobechat-minio:
+    image: minio/minio:latest
+    container_name: lobechat-minio
+    restart: always
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: $TZ
+      MINIO_SERVER_URL: $S3_PUBLIC_DOMAIN
+      MINIO_BROWSER_REDIRECT_URL: $S3_LOCAL_DOMAIN
+      MINIO_ROOT_USER: $MINIO_ROOT_USER
+      MINIO_ROOT_PASSWORD: $MINIO_ROOT_PASSWORD
+      MINIO_API_CORS_ALLOW_ORIGIN: $APP_URL
+    command: server /data --address ":9001" --console-address ":9090"
+    labels:
+      traefik.enable: true
+      traefik.http.routers.lobechat-minio-dashboard-rtr.entrypoints: https
+      traefik.http.routers.lobechat-minio-dashboard-rtr.rule: Host(`$MINIO_DASHBOARD_FQDN`)
+      traefik.http.routers.lobechat-minio-dashboard-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.lobechat-minio-dashboard-rtr.service: lobechat-minio-dashboard-svc
+      traefik.http.services.lobechat-minio-dashboard-svc.loadbalancer.server.port: 9090
+      traefik.http.routers.lobechat-minio-rtr.entrypoints: https
+      traefik.http.routers.lobechat-minio-rtr.rule: Host(`$MINIO_FQDN`)
+      traefik.http.routers.lobechat-minio-rtr.middlewares: chain-no-auth-s3@file
+      traefik.http.routers.lobechat-minio-rtr.service: lobechat-minio-svc
+      traefik.http.services.lobechat-minio-svc.loadbalancer.server.port: 9001
+    networks:
+      - proxy
+      - default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://lobechat-minio:9001/minio/health/live"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  lobechat-searxng:
+    image: searxng/searxng:latest
+    container_name: lobechat-searxng
+    restart: always
+    volumes:
+      - ./searxng:/etc/searxng
+    environment:
+      BASE_URL: http://lobechat-searxng:8080
+      INSTANCE_NAME: SearXNG
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --no-verbose --tries=1 http://localhost:8080/healthz > /dev/null 2>&1 || exit 1"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  proxy:
+    external: true

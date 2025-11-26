@@ -1,0 +1,23 @@
+<configuration>
+    <!-- File appender -->
+    <appender name="GUAC-FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/home/guacamole/logs/guacamole.log</file>
+        <encoder>
+            <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSXXX", UTC} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Console appender -->
+    <appender name="GUAC-CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{"yyyy-MM-dd'T'HH:mm:ss,SSSXXX", UTC} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Log at INFO level -->
+    <root level="INFO">
+        <appender-ref ref="GUAC-FILE" />
+        <appender-ref ref="GUAC-CONSOLE" />
+    </root>
+
+</configuration>

@@ -1,0 +1,55 @@
+services:
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: always
+    volumes:
+       - ./config:/app/config
+    environment:
+       LOG_LEVEL: info
+       TZ: $TZ
+       DB_TYPE: postgres
+       DB_HOST: jellyseerr-db
+       DB_NAME: $JELLYSEERR_DB
+       DB_USER: $JELLYSEERR_USER
+       DB_PASS: $JELLYSEERR_USER_PW
+    labels:
+      traefik.enable: true
+      traefik.http.routers.jellyseerr-rtr.entrypoints: https
+      traefik.http.routers.jellyseerr-rtr.rule: Host(`$FQDN`)
+      traefik.http.routers.jellyseerr-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.jellyseerr-rtr.service: jellyseerr-svc
+      traefik.http.services.jellyseerr-svc.loadbalancer.server.port: 5055
+    networks:
+      - proxy
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --no-verbose --tries=1 http://localhost:5055/api/v1/status > /dev/null 2>&1 || exit 1"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      jellyseerr-db:
+        condition: service_healthy
+
+  jellyseerr-db:
+    image: postgres:17
+    container_name: jellyseerr-db
+    restart: always
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: $JELLYSEERR_USER
+      POSTGRES_PASSWORD: $JELLYSEERR_USER_PW
+      POSTGRES_DB: $JELLYSEERR_DB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${JELLYSEERR_DB} -U ${JELLYSEERR_USER} "]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  proxy:
+    external: true

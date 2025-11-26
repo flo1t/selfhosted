@@ -1,0 +1,80 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    hostname: traefik
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+      - 10011:10011 # teamspeak10011
+      - 30033:30033 # teamspeak30033
+      - 9987:9987/udp # teamspeak9987
+      - 2222:2222 # gitea2222
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./config:/config
+      - ./data:/data
+      - ./logs:/logs
+    environment:
+      TZ: $TZ
+      CF_API_EMAIL: $CLOUDFLARE_EMAIL
+      CF_API_KEY: $CLOUDFLARE_API_KEY
+      DOMAINNAME_CLOUD_SERVER: $DOMAINNAME_CLOUD_SERVER
+      DOMAINNAME_LOCAL_SERVER: $DOMAINNAME_LOCAL_SERVER
+      CROWDSEC_LOCAL_API_URL: $CROWDSEC_LOCAL_API_URL
+      CROWDSEC_LOCAL_API_KEY: $CROWDSEC_LOCAL_API_KEY
+      CROWDSEC_APPSEC_API_URL: $CROWDSEC_APPSEC_API_URL
+      JELLYFIN_URL: $JELLYFIN_URL
+      LOBECHAT_URL: $LOBECHAT_URL
+      BASIC_AUTH_USERNAME: $BASIC_AUTH_USERNAME
+      BASIC_AUTH_HASHED_PASSWORD: $BASIC_AUTH_HASHED_PASSWORD
+      DOCKER_HOST: "tcp://traefik-socket-proxy:2375"
+    command:
+      - --configFile=/config/static/traefik.yml
+    labels:
+      traefik.enable: true
+      traefik.http.routers.traefik-rtr.entrypoints: https
+      traefik.http.routers.traefik-rtr.rule: Host(`${TRAEFIK_HOST}.${DOMAINNAME_LOCAL_SERVER}`)
+      traefik.http.routers.traefik-rtr.middlewares: chain-authentik-auth@file
+      traefik.http.routers.traefik-rtr.service: api@internal
+    healthcheck:
+      test: traefik healthcheck --ping
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+      - default
+    depends_on:
+      traefik-socket-proxy:
+        condition: service_healthy
+
+  traefik-socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:latest
+    container_name: traefik-socket-proxy
+    restart: always
+    environment:
+      TZ: $TZ
+      LOG_LEVEL: warning
+      CONTAINERS: 1
+      EVENTS: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    read_only: true
+    tmpfs:
+      - /run
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --no-verbose --tries=1 http://localhost:2375/version > /dev/null 2>&1 || exit 1"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+    attachable: true

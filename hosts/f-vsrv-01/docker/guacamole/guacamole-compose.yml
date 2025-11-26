@@ -1,0 +1,82 @@
+services:
+  guacamole-db:
+    image: postgres:17
+    container_name: guacamole-db
+    restart: always
+    volumes:
+      - ./db:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    environment:
+      TZ: $TZ
+      POSTGRES_DB: $GUACAMOLE_DB
+      POSTGRES_USER: $GUACAMOLE_DB_USER
+      POSTGRES_PASSWORD: $GUACAMOLE_DB_USER_PW
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${GUACAMOLE_DB} -U ${GUACAMOLE_DB_USER} "]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  guacamole-guacd:
+    image: guacamole/guacd:latest
+    #container_name: guacamole-guacd
+    build: ./server
+    restart: always
+    volumes:
+      - ./drive:/drive
+      - ./record:/var/lib/guacamole/recordings
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    labels:
+      com.centurylinklabs.watchtower.enable: false
+
+  guacamole:
+    image: guacamole/guacamole:latest
+    container_name: guacamole
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./config/logback.xml:/home/guacamole/logback.xml:ro
+      - ./logs:/home/guacamole/logs
+    environment:
+      GUACAMOLE_HOME: /home/guacamole
+      GUACD_HOSTNAME: guacamole-guacd
+      REMOTE_IP_VALVE_ENABLED: true
+      POSTGRESQL_HOSTNAME: guacamole-db
+      POSTGRESQL_DATABASE: $GUACAMOLE_DB
+      POSTGRESQL_USERNAME: $GUACAMOLE_DB_USER
+      POSTGRESQL_PASSWORD: $GUACAMOLE_DB_USER_PW
+      POSTGRESQL_AUTO_CREATE_ACCOUNTS: true
+      OPENID_AUTHORIZATION_ENDPOINT: $OPENID_AUTHORIZATION_ENDPOINT
+      OPENID_CLIENT_ID: $OPENID_CLIENT_ID
+      OPENID_ISSUER: $OPENID_ISSUER
+      OPENID_JWKS_ENDPOINT: $OPENID_JWKS_ENDPOINT
+      OPENID_REDIRECT_URI: https://$FQDN/
+    labels:
+      traefik.enable: true
+      traefik.http.routers.guacamole-rtr.entrypoints: https
+      traefik.http.routers.guacamole-rtr.rule: Host(`$FQDN`)
+      traefik.http.middlewares.guacamole-mw-prefix.addprefix.prefix: /guacamole
+      traefik.http.routers.guacamole-rtr.middlewares: chain-no-auth@file,guacamole-mw-prefix
+      traefik.http.routers.guacamole-rtr.service: guacamole-svc
+      traefik.http.services.guacamole-svc.loadbalancer.server.port: 8080
+    networks:
+      - proxy
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --no-verbose --tries=1 http://localhost:8080/guacamole > /dev/null 2>&1 || exit 1"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      guacamole-db:
+        condition: service_healthy
+      guacamole-guacd:
+        condition: service_started
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,69 @@
+filenames:
+  - /var/log/auth.log
+  - /var/log/syslog
+  - /var/log/kern.log
+labels:
+  type: syslog
+---
+listen_addr: 0.0.0.0:7422
+appsec_config: crowdsecurity/appsec-default
+name: myAppSecComponent
+source: appsec
+labels:
+  type: appsec
+---
+filenames:
+  - /var/log/traefik/logs/access.log
+labels:
+  type: traefik
+---
+source: docker
+container_name:
+ - jellyfin
+labels:
+  type: jellyfin
+---
+source: docker
+container_name:
+ - jellyseerr
+labels:
+  type: jellyseerr
+---
+filenames:
+  - /var/log/nextcloud/logs/nextcloud.log
+labels:
+  type: nextcloud
+---
+filenames:
+  - /var/log/nextcloud/logs/apache2/*.log
+labels:
+  type: apache2
+---
+source: docker
+container_name:
+ - vaultwarden
+labels:
+  type: vaultwarden
+---
+source: docker
+container_name:
+ - teamspeak
+labels:
+  type: ts3
+---
+source: docker
+container_name:
+ - authentik-server
+labels:
+  type: authentik
+---
+source: docker
+container_name:
+ - guacamole
+labels:
+  type: apache-guacamole
+---
+filenames:
+  - /var/log/jellyfin/nginx/logs/*.log
+labels:
+  type: nginx

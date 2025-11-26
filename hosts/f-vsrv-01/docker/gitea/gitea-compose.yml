@@ -1,0 +1,92 @@
+services:
+  gitea-server:
+    image: gitea/gitea:latest
+    container_name: gitea-server
+    restart: always
+    volumes:
+      - /home/git/.ssh
+      - ./data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      LOCAL_ROOT_URL: $LOCAL_ROOT_URL
+      GITEA__server__START_SSH_SERVER: true
+      GITEA__server__SSH_PORT: 2222
+      GITEA__server__SSH_LISTEN_PORT: 2222
+      GITEA__database__DB_TYPE: postgres
+      GITEA__database__HOST: gitea-db:5432
+      GITEA__database__NAME: $GITEA_DB
+      GITEA__database__USER: $GITEA_USER
+      GITEA__database__PASSWD: $GITEA_USER_PW
+      GITEA__cron__ENABLED: true
+      GITEA__cron.delete_old_actions__ENABLED: true
+      GITEA__cron.delete_old_actions__OLDER_THAN: 8760h
+      GITEA__actions__LOG_RETENTION_DAYS: 365
+    depends_on:
+      gitea-db:
+        condition: service_healthy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.gitea-rtr.entrypoints: https
+      traefik.http.routers.gitea-rtr.rule: Host(`$FQDN`)
+      traefik.http.routers.gitea-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.gitea-rtr.service: gitea-svc
+      traefik.http.services.gitea-svc.loadbalancer.server.port: 3000
+      traefik.tcp.routers.gitea2222-rtr.entrypoints: gitea2222
+      traefik.tcp.routers.gitea2222-rtr.rule: HostSNI(`*`)
+      traefik.tcp.routers.gitea2222-rtr.service: gitea2222-svc
+      traefik.tcp.services.gitea2222-svc.loadbalancer.server.port: 2222
+    healthcheck:
+      test: curl -f http://localhost:3000/api/healthz
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+      - default
+
+  gitea-db:
+    image: postgres:17
+    container_name: gitea-db
+    restart: always
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: $GITEA_USER
+      POSTGRES_PASSWORD: $GITEA_USER_PW
+      POSTGRES_DB: $GITEA_DB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${GITEA_DB} -U ${GITEA_USER} "]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  gitea-runner:
+    image: gitea/act_runner:latest
+    container_name: gitea-runner
+    restart: always
+    environment:
+      CONFIG_FILE: /config.yaml
+      GITEA_INSTANCE_URL: gitea-server
+      GITEA_RUNNER_REGISTRATION_TOKEN: $SELFHOSTED_RUNNER_TOKEN
+      GITEA_RUNNER_NAME: $SELFHOSTED_RUNNER_NAME
+      RUNNER_TOOL_CACHE: /toolcache
+    volumes:
+      - ./runner/config.yaml:/config.yaml
+      - ./runner/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      gitea-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -ltn | grep -c 6006"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  proxy:
+    external: true

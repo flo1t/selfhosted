@@ -1,6 +1,0 @@
-name: crowdsecurity/whitelists
-description: "Whitelist events from private ipv4 addresses"
-whitelist:
-  reason: "my public ip"
-  expression:
-    - evt.Overflow.Alert.Source.IP in LookupHost('<public available dns entry>') # my public ip

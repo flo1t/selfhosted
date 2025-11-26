@@ -1,0 +1,10 @@
+name: my/private-whitelist
+description: "Whitelist events from private ipv4 addresses"
+whitelist:
+  reason: "my private ipv4 addresses"
+  ip:
+    - "127.0.0.1" # Local Host
+  cidr:
+    - "192.168.0.0/16" # Local IPs
+    - "10.0.0.0/8" # Local IPs
+    - "172.16.0.0/12" # Local/Docker IPs

@@ -1,0 +1,33 @@
+services:
+  s-pdf:
+    image: frooodle/s-pdf:latest
+    container_name: s-pdf
+    restart: always
+    volumes:
+        - ./ocr:/usr/share/tesseract-ocr/5/tessdata
+        - ./config:/configs
+    environment:
+        UI_APPNAME: floit PDF
+        UI_APPNAMENAVBAR: floit PDF
+        UI_HOMEDESCRIPTION: self hosted PDF tools
+        DOCKER_ENABLE_SECURITY: false
+        SYSTEM_DEFAULTLOCALE: de-DE
+    labels:
+      traefik.enable: true
+      traefik.http.routers.spdf-rtr.entrypoints: https
+      traefik.http.routers.spdf-rtr.rule: Host(`$FQDN`)
+      traefik.http.routers.spdf-rtr.middlewares: chain-no-auth@file
+      traefik.http.routers.spdf-rtr.service: spdf-svc
+      traefik.http.services.spdf-svc.loadbalancer.server.port: 8080
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/v1/info/status | grep -q 'UP'"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

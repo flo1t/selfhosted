@@ -1,0 +1,63 @@
+services:
+  teamspeak:
+    image: teamspeak:latest
+    container_name: teamspeak
+    restart: always
+    volumes:
+      - ./data:/var/ts3server/
+    environment:
+      TS3SERVER_DB_PLUGIN: ts3db_mariadb
+      TS3SERVER_DB_SQLCREATEPATH: create_mariadb
+      TS3SERVER_DB_HOST: teamspeak-db
+      TS3SERVER_DB_USER: $TS3SERVER_DB_USER
+      TS3SERVER_DB_PASSWORD: $TS3SERVER_DB_PASSWORD
+      TS3SERVER_DB_NAME: $TS3SERVER_DB_NAME
+      TS3SERVER_DB_WAITUNTILREADY: 30
+      TS3SERVER_LICENSE: accept
+      TS3SERVER_LOG_APPEND: 1
+    labels:
+      traefik.enable: true
+      traefik.tcp.routers.teamspeak10011-rtr.entrypoints: teamspeak10011
+      traefik.tcp.routers.teamspeak10011-rtr.rule: HostSNI(`*`)
+      traefik.tcp.routers.teamspeak10011-rtr.service: teamspeak10011-svc
+      traefik.tcp.services.teamspeak10011-svc.loadbalancer.server.port: 10011
+      traefik.tcp.routers.teamspeak30033-rtr.entrypoints: teamspeak30033
+      traefik.tcp.routers.teamspeak30033-rtr.rule: HostSNI(`*`)
+      traefik.tcp.routers.teamspeak30033-rtr.service: teamspeak30033-svc
+      traefik.tcp.services.teamspeak30033-svc.loadbalancer.server.port: 30033
+      traefik.udp.routers.teamspeak9987-rtr.entrypoints: teamspeak9987
+      traefik.udp.routers.teamspeak9987-rtr.service: teamspeak9987-svc
+      traefik.udp.services.teamspeak9987-svc.loadbalancer.server.port: 9987
+    depends_on:
+      teamspeak-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -ltn | grep -c 10011"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proxy
+      - default
+
+  teamspeak-db:
+    image: mariadb:11.6.2
+    container_name: teamspeak-db
+    hostname: teamspeak-db
+    restart: always
+    volumes:
+      - ./sql:/var/lib/mysql/
+    environment:
+      MYSQL_ROOT_PASSWORD: $TS3SERVER_DB_PASSWORD
+      MYSQL_DATABASE: $TS3SERVER_DB_NAME
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin -p${TS3SERVER_DB_PASSWORD} ping"]
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  proxy:
+    external: true

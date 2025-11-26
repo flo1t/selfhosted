@@ -38,15 +38,16 @@ Prepare the folder structure:
 mkdir -p ~/docker/crowdsec/{config,data}
 touch ~/docker/crowdsec/.env
 ```
-
-Update all variables in the .env file according to your setup. Some of the variables are generated in a later step.
+Update all variables in the .env file according to your setup.
 ```sh
 nano ~/docker/crowdsec/.env
 
 # add:
-LOCAL_API_IP=<host ip of crowdsec master>
-CROWDSEC_AGENT_PASSWORD=<crowdsec agent password>
+LOCAL_API_URL=<host ip of crowdsec master>:8080
+APPSEC_API_URL=<host ip of crowdsec master>:7422
+CROWDSEC_AGENT_PASSWORD=<crowdsec agent password - will be generated later>
 HOSTNAME=<hostname>
+GID=<GID>
 ```
 
 Start the Docker container:
@@ -64,7 +65,7 @@ Restart the Docker container:
 `docker compose -f ~docker/crowdsec/crowdsec-compose.yml up -d --force-recreate`
 
 #### Connect to master server
-- Run on the agent `docker exec -t crowdsec cscli lapi register -u <host ip of crowdsec master>:8082 --machine <hostname>`
+- Run on the agent `docker exec -t crowdsec cscli lapi register -u <host ip of crowdsec master>:8080 --machine <hostname>`
 - Run on the master `docker exec -t crowdsec cscli machines validate <hostname>`
 - Check if the installation was successful (on the master) `docker exec -t crowdsec cscli machines list`
 - If so, add the CROWDSEC_AGENT_PASSWORD from "~/docker/crowdsec/config/local_api_credentials.yaml" to "~/docker/crowdsec/.env"
@@ -89,7 +90,7 @@ On the agent again:
 ...
 log_max_size: 10 # limit log file to 10 mb
 ...
-api_url: http://<host ip of crowdsec master>:8082
+api_url: http://<host ip of crowdsec master>:8080
 api_key: <add the API key from the command above>
 disable_ipv6: true
 deny_log: true

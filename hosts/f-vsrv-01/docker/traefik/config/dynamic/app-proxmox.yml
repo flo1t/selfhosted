@@ -1,0 +1,32 @@
+http:
+  routers:
+    pve-rtr:
+      rule: "Host(`proxmox.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-no-auth
+      service: pve-svc
+    pbs-rtr:
+      rule: "Host(`backup.{{env "DOMAINNAME_LOCAL_SERVER"}}`)"
+      entryPoints:
+        - https
+      middlewares:
+        - chain-no-auth
+      service: pbs-svc
+
+  services:
+    pve-svc:
+      loadBalancer:
+        serversTransport: insecureTransport
+        servers:
+          - url: "https://192.168.1.5:8006"
+    pbs-svc:
+      loadBalancer:
+        serversTransport: insecureTransport
+        servers:
+          - url: "https://192.168.1.11:8007"
+
+  serversTransports:
+    insecureTransport:
+      insecureSkipVerify: true

@@ -1,0 +1,6 @@
+name: my/public-whitelist
+description: "Whitelist events from public ipv4 address"
+whitelist:
+  reason: "my public ipv4 address"
+  expression:
+    - evt.Overflow.Alert.Source.IP in LookupHost('<public available fqdn with real ip>') # my public ip

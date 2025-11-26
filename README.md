@@ -7,7 +7,11 @@ This repository includes all Docker Compose and configuration files for the appl
 
 ## ToDo
 - Implement README.md for all services
-- Add a schematic overview
+- Remove setup-files when all services are documented
+- Migrate from .env to Docker secrets
+- Populate the secret files with Gitea Actions
+- Migrate Ansible to Gitea Actions
+- Check if variables defined in the .env file can be removed from the environment section
 
 ## Structure of this repository
 | Folder | Purpose |
@@ -16,6 +20,7 @@ This repository includes all Docker Compose and configuration files for the appl
 | .gitea/workflows | gitea actions |
 | hosts/all | subfolders will be published to all servers |
 | hosts/hostname | subfolders will be published to *hostname* |
+| templates | template files for docker compose, scripts, etc. |
 
 ## Host setup
 | Folder | Purpose |
@@ -26,6 +31,7 @@ This repository includes all Docker Compose and configuration files for the appl
 | ~/docker/*service*/container-compose.yml | docker compose file for *service* |
 | ~/docker/*service*/setup-files | non docker relevant files for *service* |
 | ~/docker/*service*/data | *service* data (the name of the folder varies depending on the purpose) |
+| ~/docker/*service*/config | *service* logs (the name of the folder varies depending on the purpose) |
 | ~/docker/*service*/logs | *service* logs (the name of the folder varies depending on the purpose) |
 | ~/scripts | folder for scripts |
 
