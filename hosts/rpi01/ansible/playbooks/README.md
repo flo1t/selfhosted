@@ -23,7 +23,7 @@ sudo nano /etc/ansible/hosts
 # add:
 [servers]
 rpi01 ansible_host=192.168.1.10
-F-VSRV-01 ansible_host=192.168.1.15
+f-vsrv-01 ansible_host=192.168.1.15
 ```
 
 #### Add variables

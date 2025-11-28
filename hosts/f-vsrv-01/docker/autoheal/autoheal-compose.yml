@@ -23,7 +23,7 @@ services:
       TZ: $TZ
       LOG_LEVEL: warning
       ALLOW_START: 1
-      #ALLOW_RESTART: 1
+      ALLOW_RESTART: 1
       ALLOW_STOP: 1
       CONTAINERS: 1
     volumes:
