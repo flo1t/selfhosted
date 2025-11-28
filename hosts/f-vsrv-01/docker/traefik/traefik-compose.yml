@@ -7,9 +7,6 @@ services:
     ports:
       - 80:80
       - 443:443
-      - 10011:10011 # teamspeak10011
-      - 30033:30033 # teamspeak30033
-      - 9987:9987/udp # teamspeak9987
       - 2222:2222 # gitea2222
     security_opt:
       - no-new-privileges:true

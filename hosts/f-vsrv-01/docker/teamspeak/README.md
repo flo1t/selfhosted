@@ -3,41 +3,37 @@
 ## Teamspeak
 
 ### Description
-
+Use crystal clear sound to communicate with your team mates cross-platform with military-grade security, lag-free performance & unparalleled reliability and uptime.
 
 ### Folderstructure
 | Folder | Purpose |
 |---|---|
 | ~/docker/teamspeak | folder for teamspeak |
-| ~/docker/teamspeak/.env | env file for secrets |
+| ~/docker/traefik/.env | env file for secrets |
 | ~/docker/teamspeak/teamspeak-compose.yml | docker compose file |
 | ~/docker/teamspeak/setup-files | folder for custom files, which are not used from docker |
-| ~/docker/teamspeak/data | config folder |
-| ~/docker/teamspeak/sql | data folder |
+| ~/docker/teamspeak/data | data folder |
 
 ### Setup
 #### Overview
 
 #### Prerequisites
 - Open ports
-- Traefik
 
 #### Setup Docker container
 Prepare the folder structure:
 ```sh
-mkdir -p ~/docker/teamspeak/{data,sql}
+mkdir -p ~/docker/teamspeak/data
 touch ~/docker/teamspeak/.env
 sudo chmod 600 ~/docker/teamspeak/.env
 ```
 
-Update all variables in the .env file according to your setup. Some of the variables are generated in a later step.
+Update all variables in the .env file according to your setup.
 ```sh
 nano ~/docker/teamspeak/.env
 
 # add:
-TS3SERVER_DB_PASSWORD=<pw>
-TS3SERVER_DB_USER=<db user>
-TS3SERVER_DB_NAME=<db name>
+TS3SERVER_SERVERADMIN_PASSWORD=<password>
 ```
 
 Start the Docker container:
