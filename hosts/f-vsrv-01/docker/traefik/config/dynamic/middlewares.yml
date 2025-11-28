@@ -190,3 +190,9 @@ http:
       basicAuth:
         users:
           - "{{env "BASIC_AUTH_USERNAME"}}:{{env "BASIC_AUTH_HASHED_PASSWORD"}}"
+
+tcp:
+  serversTransports:
+    proxyProtocolv2:
+      proxyProtocol:
+        version: 2
